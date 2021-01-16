@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License 2.0.
-// This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2020 Datadog, Inc.
+// Copyright 2020 Datadog, Inc. for original work
+// Copyright 2021 GraphMetrics for modifications
 
 package mapping
 
@@ -83,11 +83,4 @@ func TestCubicallyInterpolatedMappingAccuracy(t *testing.T) {
 		mapping, _ := NewCubicallyInterpolatedMapping(relativeAccuracy)
 		EvaluateMappingAccuracy(t, mapping, relativeAccuracy)
 	}
-}
-
-func TestSerialization(t *testing.T) {
-	m, _ := NewCubicallyInterpolatedMapping(1e-2)
-	deserializedMapping, err := FromProto(m.ToProto())
-	assert.Nil(t, err)
-	assert.True(t, m.Equals(deserializedMapping))
 }

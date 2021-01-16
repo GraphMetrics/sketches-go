@@ -1,4 +1,6 @@
 Datadog sketches-go 
-Copyright 2018 Datadog, Inc.
+Copyright 2018-2020 Datadog, Inc. for original work
+GraphMetrics ddsketch-go
+Copyright 2021 GraphMetrics for modifications
 
 This product includes software developed at Datadog (https://www.datadoghq.com/).

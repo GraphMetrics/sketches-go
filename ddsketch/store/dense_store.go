@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License 2.0.
-// This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2020 Datadog, Inc.
+// Copyright 2020 Datadog, Inc. for original work
+// Copyright 2021 GraphMetrics for modifications
 
 package store
 
@@ -10,8 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-
-	"github.com/DataDog/sketches-go/ddsketch/pb/sketchpb"
 )
 
 const (
@@ -218,16 +216,4 @@ func (s *DenseStore) string() string {
 	}
 	buffer.WriteString(fmt.Sprintf("count: %v, offset: %d, minIndex: %d, maxIndex: %d}", s.count, s.offset, s.minIndex, s.maxIndex))
 	return buffer.String()
-}
-
-func (s *DenseStore) ToProto() *sketchpb.Store {
-	if s.IsEmpty() {
-		return &sketchpb.Store{ContiguousBinCounts: nil}
-	}
-	bins := make([]float64, s.maxIndex-s.minIndex+1)
-	copy(bins, s.bins[s.minIndex-s.offset:s.maxIndex-s.offset+1])
-	return &sketchpb.Store{
-		ContiguousBinCounts:      bins,
-		ContiguousBinIndexOffset: int32(s.minIndex),
-	}
 }

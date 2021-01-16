@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License 2.0.
-// This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2020 Datadog, Inc.
+// Copyright 2020 Datadog, Inc. for original work
+// Copyright 2021 GraphMetrics for modifications
 
 package mapping
 
@@ -10,8 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-
-	"github.com/DataDog/sketches-go/ddsketch/pb/sketchpb"
 )
 
 // An IndexMapping that is memory-optimal, that is to say that given a targeted relative accuracy, it
@@ -82,15 +80,6 @@ func (m *LogarithmicMapping) MaxIndexableValue() float64 {
 
 func (m *LogarithmicMapping) RelativeAccuracy() float64 {
 	return m.relativeAccuracy
-}
-
-// Generates a protobuf representation of this LogarithicMapping.
-func (m *LogarithmicMapping) ToProto() *sketchpb.IndexMapping {
-	return &sketchpb.IndexMapping{
-		Gamma:         (1 + m.relativeAccuracy) / (1 - m.relativeAccuracy),
-		IndexOffset:   m.normalizedIndexOffset,
-		Interpolation: sketchpb.IndexMapping_NONE,
-	}
 }
 
 func (m *LogarithmicMapping) string() string {

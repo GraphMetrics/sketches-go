@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License 2.0.
-// This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2020 Datadog, Inc.
+// Copyright 2020 Datadog, Inc. for original work
+// Copyright 2021 GraphMetrics for modifications
 
 package ddsketch
 
@@ -10,7 +10,6 @@ import (
 	"math"
 
 	"github.com/DataDog/sketches-go/ddsketch/mapping"
-	"github.com/DataDog/sketches-go/ddsketch/pb/sketchpb"
 	"github.com/DataDog/sketches-go/ddsketch/store"
 )
 
@@ -191,28 +190,4 @@ func (s *DDSketch) MergeWith(other *DDSketch) error {
 	s.negativeValueStore.MergeWith(other.negativeValueStore)
 	s.zeroCount += other.zeroCount
 	return nil
-}
-
-// Generates a protobuf representation of this DDSketch.
-func (s *DDSketch) ToProto() *sketchpb.DDSketch {
-	return &sketchpb.DDSketch{
-		Mapping:        s.IndexMapping.ToProto(),
-		PositiveValues: s.positiveValueStore.ToProto(),
-		NegativeValues: s.negativeValueStore.ToProto(),
-		ZeroCount:      s.zeroCount,
-	}
-}
-
-// Builds a new instance of DDSketch based on the provided protobuf representation.
-func (s *DDSketch) FromProto(pb *sketchpb.DDSketch) (*DDSketch, error) {
-	m, err := mapping.FromProto(pb.Mapping)
-	if err != nil {
-		return nil, err
-	}
-	return &DDSketch{
-		IndexMapping:       m,
-		positiveValueStore: store.FromProto(pb.PositiveValues),
-		negativeValueStore: store.FromProto(pb.NegativeValues),
-		zeroCount:          pb.ZeroCount,
-	}, nil
 }

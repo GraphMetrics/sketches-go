@@ -1,13 +1,9 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License 2.0.
-// This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2020 Datadog, Inc.
+// Copyright 2020 Datadog, Inc. for original work
+// Copyright 2021 GraphMetrics for modifications
 
 package store
-
-import (
-	"github.com/DataDog/sketches-go/ddsketch/pb/sketchpb"
-)
 
 type Store interface {
 	Add(index int)
@@ -21,17 +17,4 @@ type Store interface {
 	TotalCount() float64
 	KeyAtRank(rank float64) int
 	MergeWith(store Store)
-	ToProto() *sketchpb.Store
-}
-
-// Returns an instance of DenseStore that contains the data in the provided protobuf representation.
-func FromProto(pb *sketchpb.Store) *DenseStore {
-	store := NewDenseStore()
-	for idx, count := range pb.BinCounts {
-		store.AddWithCount(int(idx), count)
-	}
-	for idx, count := range pb.ContiguousBinCounts {
-		store.AddWithCount(idx+int(pb.ContiguousBinIndexOffset), count)
-	}
-	return store
 }

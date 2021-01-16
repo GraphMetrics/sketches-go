@@ -1,7 +1,8 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2020 Datadog, Inc.
+// Copyright 2020 Datadog, Inc. for original work
+// Copyright 2021 GraphMetrics for modifications
 
 package ddsketch
 
@@ -11,9 +12,7 @@ import (
 	"testing"
 
 	"github.com/DataDog/sketches-go/dataset"
-	"github.com/DataDog/sketches-go/ddsketch/pb/sketchpb"
 
-	"github.com/golang/protobuf/proto"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 )
@@ -45,16 +44,6 @@ func EvaluateSketch(t *testing.T, n int, gen dataset.Generator, alpha float64) {
 		data.Add(-value)
 	}
 	AssertSketchesAccurate(t, data, sketch, alpha)
-
-	// Serialize/deserialize the sketch
-	bytes, err := proto.Marshal(sketch.ToProto())
-	assert.Nil(t, err)
-	var sketchPb sketchpb.DDSketch
-	err = proto.Unmarshal(bytes, &sketchPb)
-	assert.Nil(t, err)
-	deserializedSketch, err := sketch.FromProto(&sketchPb)
-	assert.Nil(t, err)
-	AssertSketchesAccurate(t, data, deserializedSketch, alpha)
 }
 
 func AssertSketchesAccurate(t *testing.T, data *dataset.Dataset, sketch *DDSketch, alpha float64) {

@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License 2.0.
-// This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2020 Datadog, Inc.
+// Copyright 2020 Datadog, Inc. for original work
+// Copyright 2021 GraphMetrics for modifications
 
 package store
 
@@ -402,32 +402,4 @@ func AssertDenseStoresEqual(t *testing.T, store DenseStore, other DenseStore) {
 		store.bins[store.minIndex-store.offset:store.maxIndex+1-store.offset],
 		other.bins[other.minIndex-other.offset:other.maxIndex+1-other.offset],
 	)
-}
-
-func TestSerialization(t *testing.T) {
-	nTests := 100
-	// Store indices are limited to the int32 range
-	var values []int32
-	f := fuzz.New().NilChance(0).NumElements(10, 1000)
-	for i := 0; i < nTests; i++ {
-		f.Fuzz(&values)
-		for _, maxNumBins := range testMaxNumBins {
-			storeLow := NewCollapsingLowestDenseStore(maxNumBins)
-			storeHigh := NewCollapsingHighestDenseStore(maxNumBins)
-			for _, v := range values {
-				storeLow.Add(int(v))
-				storeHigh.Add(int(v))
-			}
-			deserializedStoreLow := FromProto(storeLow.ToProto())
-			AssertDenseStoresEqual(t, storeLow.DenseStore, *deserializedStoreLow)
-			//			EvaluateCollapsingLowestStore(t, deserializedStoreLow, values)
-			// Store does not change after serializing
-			assert.Equal(t, storeLow.maxNumBins, maxNumBins)
-			deserializedStoreHigh := FromProto(storeHigh.ToProto())
-			AssertDenseStoresEqual(t, storeHigh.DenseStore, *deserializedStoreHigh)
-			//EvaluateCollapsingHighestStore(t, deserializedStoreHigh, values)
-			// Store does not change after serializing
-			assert.Equal(t, storeHigh.maxNumBins, maxNumBins)
-		}
-	}
 }
