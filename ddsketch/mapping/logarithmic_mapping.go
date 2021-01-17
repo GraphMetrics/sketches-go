@@ -48,7 +48,7 @@ func (m *LogarithmicMapping) Equals(other IndexMapping) bool {
 		return false
 	}
 	tol := 1e-12
-	return (withinTolerance(m.multiplier, o.multiplier, tol) && withinTolerance(m.normalizedIndexOffset, o.normalizedIndexOffset, tol))
+	return withinTolerance(m.multiplier, o.multiplier, tol) && withinTolerance(m.normalizedIndexOffset, o.normalizedIndexOffset, tol)
 }
 
 func (m *LogarithmicMapping) Index(value float64) int {
@@ -66,14 +66,14 @@ func (m *LogarithmicMapping) Value(index int) float64 {
 
 func (m *LogarithmicMapping) MinIndexableValue() float64 {
 	return math.Max(
-		math.Exp((math.MinInt32-m.normalizedIndexOffset)/m.multiplier+1), // so that index >= MinInt32
+		math.Exp((math.MinInt16-m.normalizedIndexOffset)/m.multiplier+1), // so that index >= MinInt16
 		minNormalFloat64*(1+m.relativeAccuracy)/(1-m.relativeAccuracy),
 	)
 }
 
 func (m *LogarithmicMapping) MaxIndexableValue() float64 {
 	return math.Min(
-		math.Exp((math.MaxInt32-m.normalizedIndexOffset)/m.multiplier-1), // so that index <= MaxInt32
+		math.Exp((math.MaxInt16-m.normalizedIndexOffset)/m.multiplier-1), // so that index <= MaxInt16
 		math.Exp(expOverflow)/(1+m.relativeAccuracy),                     // so that math.Exp does not overflow
 	)
 }

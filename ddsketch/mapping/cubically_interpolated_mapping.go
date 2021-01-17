@@ -57,7 +57,7 @@ func (m *CubicallyInterpolatedMapping) Equals(other IndexMapping) bool {
 		return false
 	}
 	tol := 1e-12
-	return (withinTolerance(m.multiplier, o.multiplier, tol) && withinTolerance(m.normalizedIndexOffset, o.normalizedIndexOffset, tol))
+	return withinTolerance(m.multiplier, o.multiplier, tol) && withinTolerance(m.normalizedIndexOffset, o.normalizedIndexOffset, tol)
 }
 
 func (m *CubicallyInterpolatedMapping) Index(value float64) int {
@@ -94,14 +94,14 @@ func (m *CubicallyInterpolatedMapping) approximateInverseLog(x float64) float64 
 
 func (m *CubicallyInterpolatedMapping) MinIndexableValue() float64 {
 	return math.Max(
-		math.Exp2((math.MinInt32-m.normalizedIndexOffset)/m.multiplier-m.approximateLog(1)+1), // so that index >= MinInt32:w
+		math.Exp2((math.MinInt16-m.normalizedIndexOffset)/m.multiplier-m.approximateLog(1)+1), // so that index >= MinInt16
 		minNormalFloat64*(1+m.relativeAccuracy)/(1-m.relativeAccuracy),
 	)
 }
 
 func (m *CubicallyInterpolatedMapping) MaxIndexableValue() float64 {
 	return math.Min(
-		math.Exp2((math.MaxInt32-m.normalizedIndexOffset)/m.multiplier-m.approximateLog(float64(1))-1), // so that index <= MaxInt32
+		math.Exp2((math.MaxInt16-m.normalizedIndexOffset)/m.multiplier-m.approximateLog(float64(1))-1), // so that index <= MaxInt16
 		math.Exp(expOverflow)/(1+m.relativeAccuracy),                                                   // so that math.Exp does not overflow
 	)
 }
