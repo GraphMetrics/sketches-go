@@ -173,3 +173,8 @@ func (s *DDSketch) MergeWith(other *DDSketch) error {
 	s.zeroCount += other.zeroCount
 	return nil
 }
+
+// Extract the bins from the store
+func (s *DDSketch) Bins() <-chan store.Bin {
+	return s.store.Bins()
+}
