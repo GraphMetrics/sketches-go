@@ -8,13 +8,13 @@ package store
 type Store interface {
 	Add(index int)
 	AddBin(bin Bin)
-	AddWithCount(index int, count float64)
+	AddWithCount(index int, count int32)
 	Bins() <-chan Bin
 	Copy() Store
 	IsEmpty() bool
 	MaxIndex() (int, error)
 	MinIndex() (int, error)
-	TotalCount() float64
+	TotalCount() int32
 	KeyAtRank(rank float64) int
 	MergeWith(store Store)
 }

@@ -22,7 +22,7 @@ func NewCollapsingHighestDenseStore(maxNumBins int) *CollapsingHighestDenseStore
 }
 
 func (s *CollapsingHighestDenseStore) Add(index int) {
-	s.AddWithCount(index, float64(1))
+	s.AddWithCount(index, int32(1))
 }
 
 func (s *CollapsingHighestDenseStore) AddBin(bin Bin) {
@@ -34,7 +34,7 @@ func (s *CollapsingHighestDenseStore) AddBin(bin Bin) {
 	s.AddWithCount(index, count)
 }
 
-func (s *CollapsingHighestDenseStore) AddWithCount(index int, count float64) {
+func (s *CollapsingHighestDenseStore) AddWithCount(index int, count int32) {
 	if count == 0 {
 		return
 	}
@@ -69,7 +69,7 @@ func (s *CollapsingHighestDenseStore) extendRange(newMinIndex, newMaxIndex int) 
 	newMaxIndex = max(newMaxIndex, s.maxIndex)
 	if s.IsEmpty() {
 		initialLength := s.getNewLength(newMinIndex, newMaxIndex)
-		s.bins = make([]float64, initialLength)
+		s.bins = make([]int32, initialLength)
 		s.offset = newMinIndex
 		s.minIndex = newMinIndex
 		s.maxIndex = newMaxIndex
@@ -82,7 +82,7 @@ func (s *CollapsingHighestDenseStore) extendRange(newMinIndex, newMaxIndex int) 
 		// we may grow it before we actually reach the capacity.
 		newLength := s.getNewLength(newMinIndex, newMaxIndex)
 		if newLength > len(s.bins) {
-			tmpBins := make([]float64, newLength)
+			tmpBins := make([]int32, newLength)
 			copy(tmpBins, s.bins)
 			s.bins = tmpBins
 		}
@@ -98,7 +98,7 @@ func (s *CollapsingHighestDenseStore) adjust(newMinIndex, newMaxIndex int) {
 		newMaxIndex = newMinIndex + len(s.bins) - 1
 		if newMaxIndex <= s.minIndex {
 			// There will be only one non-empty bucket.
-			s.bins = make([]float64, len(s.bins))
+			s.bins = make([]int32, len(s.bins))
 			s.offset = newMinIndex
 			s.maxIndex = newMaxIndex
 			s.bins[len(s.bins)-1] = s.count
@@ -106,7 +106,7 @@ func (s *CollapsingHighestDenseStore) adjust(newMinIndex, newMaxIndex int) {
 			shift := s.offset - newMinIndex
 			if shift > 0 {
 				// Collapse the buckets.
-				n := float64(0)
+				n := int32(0)
 				for i := newMaxIndex + 1; i <= s.maxIndex; i++ {
 					n += s.bins[i-s.offset]
 				}
@@ -158,7 +158,7 @@ func (s *CollapsingHighestDenseStore) MergeWith(other Store) {
 }
 
 func (s *CollapsingHighestDenseStore) Copy() Store {
-	bins := make([]float64, len(s.bins))
+	bins := make([]int32, len(s.bins))
 	copy(bins, s.bins)
 	return &CollapsingHighestDenseStore{
 		DenseStore: DenseStore{

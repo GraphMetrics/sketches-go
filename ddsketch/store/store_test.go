@@ -18,12 +18,12 @@ var (
 )
 
 func EvaluateValues(t *testing.T, store *DenseStore, values []int, collapsingLowest bool, collapsingHighest bool) {
-	var count float64
+	var count int32
 	for _, b := range store.bins {
 		count += b
 	}
 	assert.Equal(t, count, store.count)
-	assert.Equal(t, count, float64(len(values)))
+	assert.Equal(t, count, int32(len(values)))
 	sort.Slice(values, func(i, j int) bool { return values[i] < values[j] })
 	if !collapsingLowest {
 		minIndex, _ := store.MinIndex()
@@ -112,12 +112,12 @@ func TestMerge(t *testing.T) {
 }
 
 func EvaluateCollapsingLowestStore(t *testing.T, store *CollapsingLowestDenseStore, values []int32) {
-	var count float64
+	var count int32
 	for _, b := range store.bins {
 		count += b
 	}
 	assert.Equal(t, count, store.count)
-	assert.Equal(t, count, float64(len(values)))
+	assert.Equal(t, count, int32(len(values)))
 	sort.Slice(values, func(i, j int) bool { return values[i] < values[j] })
 	maxIndex, _ := store.MaxIndex()
 	assert.Equal(t, maxIndex, int(values[len(values)-1]))
@@ -125,12 +125,12 @@ func EvaluateCollapsingLowestStore(t *testing.T, store *CollapsingLowestDenseSto
 }
 
 func EvaluateCollapsingHighestStore(t *testing.T, store *CollapsingHighestDenseStore, values []int32) {
-	var count float64
+	var count int32
 	for _, b := range store.bins {
 		count += b
 	}
 	assert.Equal(t, count, store.count)
-	assert.Equal(t, count, float64(len(values)))
+	assert.Equal(t, count, int32(len(values)))
 	sort.Slice(values, func(i, j int) bool { return values[i] < values[j] })
 	minIndex, _ := store.MinIndex()
 	assert.Equal(t, minIndex, int(values[0]))

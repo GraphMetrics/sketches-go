@@ -12,7 +12,7 @@ import (
 
 type Dataset struct {
 	Values []float64
-	Count  float64
+	Count  int32
 	sorted bool
 }
 

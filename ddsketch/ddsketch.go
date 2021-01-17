@@ -16,7 +16,7 @@ import (
 type DDSketch struct {
 	mapping.IndexMapping
 	store     store.Store
-	zeroCount float64
+	zeroCount int32
 }
 
 func NewDDSketch(indexMapping mapping.IndexMapping, store store.Store) *DDSketch {
@@ -66,11 +66,11 @@ func LogCollapsingHighestDenseDDSketch(relativeAccuracy float64, maxNumBins int)
 
 // Adds a value to the sketch.
 func (s *DDSketch) Add(value float64) error {
-	return s.AddWithCount(value, float64(1))
+	return s.AddWithCount(value, int32(1))
 }
 
-// Adds a value to the sketch with a float64 count.
-func (s *DDSketch) AddWithCount(value, count float64) error {
+// Adds a value to the sketch with a int32 count.
+func (s *DDSketch) AddWithCount(value float64, count int32) error {
 	if value < 0 || value > s.MaxIndexableValue() {
 		return errors.New("input value is outside the range that is tracked by the sketch")
 	}
@@ -106,11 +106,11 @@ func (s *DDSketch) GetValueAtQuantile(quantile float64) (float64, error) {
 		return math.NaN(), errors.New("no such element exists")
 	}
 
-	rank := quantile * (count - 1)
-	if rank < s.zeroCount {
+	rank := quantile * float64(count-1)
+	if rank < float64(s.zeroCount) {
 		return 0, nil
 	} else {
-		return s.Value(s.store.KeyAtRank(rank - s.zeroCount)), nil
+		return s.Value(s.store.KeyAtRank(rank - float64(s.zeroCount))), nil
 	}
 }
 
@@ -129,7 +129,7 @@ func (s *DDSketch) GetValuesAtQuantiles(quantiles []float64) ([]float64, error) 
 }
 
 // Return the total number of values that have been added to this sketch.
-func (s *DDSketch) GetCount() float64 {
+func (s *DDSketch) GetCount() int32 {
 	return s.zeroCount + s.store.TotalCount()
 }
 

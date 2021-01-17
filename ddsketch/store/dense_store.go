@@ -23,8 +23,8 @@ const (
 // DenseStore is a dynamically growing contiguous (non-sparse) store. The number of bins are
 // bound only by the size of the slice that can be allocated.
 type DenseStore struct {
-	bins     []float64
-	count    float64
+	bins     []int32
+	count    int32
 	offset   int
 	minIndex int
 	maxIndex int
@@ -35,7 +35,7 @@ func NewDenseStore() *DenseStore {
 }
 
 func (s *DenseStore) Add(index int) {
-	s.AddWithCount(index, float64(1))
+	s.AddWithCount(index, int32(1))
 }
 
 func (s *DenseStore) AddBin(bin Bin) {
@@ -47,7 +47,7 @@ func (s *DenseStore) AddBin(bin Bin) {
 	s.AddWithCount(index, count)
 }
 
-func (s *DenseStore) AddWithCount(index int, count float64) {
+func (s *DenseStore) AddWithCount(index int, count int32) {
 	if count == 0 {
 		return
 	}
@@ -76,7 +76,7 @@ func (s *DenseStore) extendRange(newMinIndex, newMaxIndex int) {
 
 	if s.IsEmpty() {
 		initialLength := s.getNewLength(newMinIndex, newMaxIndex)
-		s.bins = make([]float64, initialLength)
+		s.bins = make([]int32, initialLength)
 		s.offset = newMinIndex
 		s.minIndex = newMinIndex
 		s.maxIndex = newMaxIndex
@@ -89,7 +89,7 @@ func (s *DenseStore) extendRange(newMinIndex, newMaxIndex int) {
 		// we may grow it before we actually reach the capacity.
 		newLength := s.getNewLength(newMinIndex, newMaxIndex)
 		if newLength > len(s.bins) {
-			tmpBins := make([]float64, newLength)
+			tmpBins := make([]int32, newLength)
 			copy(tmpBins, s.bins)
 			s.bins = tmpBins
 		}
@@ -132,7 +132,7 @@ func (s *DenseStore) IsEmpty() bool {
 	return s.count == 0
 }
 
-func (s *DenseStore) TotalCount() float64 {
+func (s *DenseStore) TotalCount() int32 {
 	return s.count
 }
 
@@ -152,10 +152,10 @@ func (s *DenseStore) MaxIndex() (int, error) {
 
 // Return the key for the value at rank
 func (s *DenseStore) KeyAtRank(rank float64) int {
-	var n float64
+	var n int32
 	for i, b := range s.bins {
 		n += b
-		if n > rank {
+		if float64(n) > rank {
 			return i + s.offset
 		}
 	}
@@ -196,7 +196,7 @@ func (s *DenseStore) Bins() <-chan Bin {
 }
 
 func (s *DenseStore) Copy() Store {
-	bins := make([]float64, len(s.bins))
+	bins := make([]int32, len(s.bins))
 	copy(bins, s.bins)
 	return &DenseStore{
 		bins:     bins,
@@ -212,7 +212,7 @@ func (s *DenseStore) string() string {
 	buffer.WriteString("{")
 	for i := 0; i < len(s.bins); i++ {
 		index := i + s.offset
-		buffer.WriteString(fmt.Sprintf("%d: %f, ", index, s.bins[i]))
+		buffer.WriteString(fmt.Sprintf("%d: %d, ", index, s.bins[i]))
 	}
 	buffer.WriteString(fmt.Sprintf("count: %v, offset: %d, minIndex: %d, maxIndex: %d}", s.count, s.offset, s.minIndex, s.maxIndex))
 	return buffer.String()
