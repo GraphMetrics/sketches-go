@@ -15,16 +15,14 @@ import (
 
 type DDSketch struct {
 	mapping.IndexMapping
-	positiveValueStore store.Store
-	negativeValueStore store.Store
-	zeroCount          float64
+	store     store.Store
+	zeroCount float64
 }
 
-func NewDDSketch(indexMapping mapping.IndexMapping, positiveValueStore store.Store, negativeValueStore store.Store) *DDSketch {
+func NewDDSketch(indexMapping mapping.IndexMapping, store store.Store) *DDSketch {
 	return &DDSketch{
-		IndexMapping:       indexMapping,
-		positiveValueStore: positiveValueStore,
-		negativeValueStore: negativeValueStore,
+		IndexMapping: indexMapping,
+		store:        store,
 	}
 }
 
@@ -39,7 +37,7 @@ func LogUnboundedDenseDDSketch(relativeAccuracy float64) (*DDSketch, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewDDSketch(indexMapping, store.NewDenseStore(), store.NewDenseStore()), nil
+	return NewDDSketch(indexMapping, store.NewDenseStore()), nil
 }
 
 // Constructs an instance of DDSketch that offers constant-time insertion and whose size grows until the
@@ -51,7 +49,7 @@ func LogCollapsingLowestDenseDDSketch(relativeAccuracy float64, maxNumBins int) 
 	if err != nil {
 		return nil, err
 	}
-	return NewDDSketch(indexMapping, store.NewCollapsingLowestDenseStore(maxNumBins), store.NewCollapsingLowestDenseStore(maxNumBins)), nil
+	return NewDDSketch(indexMapping, store.NewCollapsingLowestDenseStore(maxNumBins)), nil
 }
 
 // Constructs an instance of DDSketch that offers constant-time insertion and whose size grows until the
@@ -63,7 +61,7 @@ func LogCollapsingHighestDenseDDSketch(relativeAccuracy float64, maxNumBins int)
 	if err != nil {
 		return nil, err
 	}
-	return NewDDSketch(indexMapping, store.NewCollapsingHighestDenseStore(maxNumBins), store.NewCollapsingHighestDenseStore(maxNumBins)), nil
+	return NewDDSketch(indexMapping, store.NewCollapsingHighestDenseStore(maxNumBins)), nil
 }
 
 // Adds a value to the sketch.
@@ -73,17 +71,15 @@ func (s *DDSketch) Add(value float64) error {
 
 // Adds a value to the sketch with a float64 count.
 func (s *DDSketch) AddWithCount(value, count float64) error {
-	if value < -s.MaxIndexableValue() || value > s.MaxIndexableValue() {
-		return errors.New("The input value is outside the range that is tracked by the sketch.")
+	if value < 0 || value > s.MaxIndexableValue() {
+		return errors.New("input value is outside the range that is tracked by the sketch")
 	}
 	if count < 0 {
 		return errors.New("The count cannot be negative.")
 	}
 
 	if value > s.MinIndexableValue() {
-		s.positiveValueStore.AddWithCount(s.Index(value), count)
-	} else if value < -s.MinIndexableValue() {
-		s.negativeValueStore.AddWithCount(s.Index(-value), count)
+		s.store.AddWithCount(s.Index(value), count)
 	} else {
 		s.zeroCount += count
 	}
@@ -93,9 +89,8 @@ func (s *DDSketch) AddWithCount(value, count float64) error {
 // Return a (deep) copy of this sketch.
 func (s *DDSketch) Copy() *DDSketch {
 	return &DDSketch{
-		IndexMapping:       s.IndexMapping,
-		positiveValueStore: s.positiveValueStore.Copy(),
-		negativeValueStore: s.negativeValueStore.Copy(),
+		IndexMapping: s.IndexMapping,
+		store:        s.store.Copy(),
 	}
 }
 
@@ -108,17 +103,14 @@ func (s *DDSketch) GetValueAtQuantile(quantile float64) (float64, error) {
 
 	count := s.GetCount()
 	if count == 0 {
-		return math.NaN(), errors.New("No such element exists")
+		return math.NaN(), errors.New("no such element exists")
 	}
 
 	rank := quantile * (count - 1)
-	negativeValueCount := s.negativeValueStore.TotalCount()
-	if rank < negativeValueCount {
-		return -s.Value(s.negativeValueStore.KeyAtRank(negativeValueCount - 1 - rank)), nil
-	} else if rank < s.zeroCount+negativeValueCount {
+	if rank < s.zeroCount {
 		return 0, nil
 	} else {
-		return s.Value(s.positiveValueStore.KeyAtRank(rank - s.zeroCount - negativeValueCount)), nil
+		return s.Value(s.store.KeyAtRank(rank - s.zeroCount)), nil
 	}
 }
 
@@ -138,41 +130,32 @@ func (s *DDSketch) GetValuesAtQuantiles(quantiles []float64) ([]float64, error) 
 
 // Return the total number of values that have been added to this sketch.
 func (s *DDSketch) GetCount() float64 {
-	return s.zeroCount + s.positiveValueStore.TotalCount() + s.negativeValueStore.TotalCount()
+	return s.zeroCount + s.store.TotalCount()
 }
 
 // Return true iff no value has been added to this sketch.
 func (s *DDSketch) IsEmpty() bool {
-	return s.zeroCount == 0 && s.positiveValueStore.IsEmpty() && s.negativeValueStore.IsEmpty()
+	return s.zeroCount == 0 && s.store.IsEmpty()
 }
 
 // Return the maximum value that has been added to this sketch. Return a non-nil error if the sketch
 // is empty.
 func (s *DDSketch) GetMaxValue() (float64, error) {
-	if !s.positiveValueStore.IsEmpty() {
-		maxIndex, _ := s.positiveValueStore.MaxIndex()
+	if !s.store.IsEmpty() {
+		maxIndex, _ := s.store.MaxIndex()
 		return s.Value(maxIndex), nil
-	} else if s.zeroCount > 0 {
-		return 0, nil
 	} else {
-		minIndex, err := s.negativeValueStore.MinIndex()
-		if err != nil {
-			return math.NaN(), err
-		}
-		return -s.Value(minIndex), nil
+		return 0, nil
 	}
 }
 
 // Return the minimum value that has been added to this sketch. Returns a non-nil error if the sketch
 // is empty.
 func (s *DDSketch) GetMinValue() (float64, error) {
-	if !s.negativeValueStore.IsEmpty() {
-		maxIndex, _ := s.negativeValueStore.MaxIndex()
-		return -s.Value(maxIndex), nil
-	} else if s.zeroCount > 0 {
+	if s.zeroCount > 0 {
 		return 0, nil
 	} else {
-		minIndex, err := s.positiveValueStore.MinIndex()
+		minIndex, err := s.store.MinIndex()
 		if err != nil {
 			return math.NaN(), err
 		}
@@ -186,8 +169,7 @@ func (s *DDSketch) MergeWith(other *DDSketch) error {
 	if !s.IndexMapping.Equals(other.IndexMapping) {
 		return errors.New("Cannot merge sketches with different index mappings.")
 	}
-	s.positiveValueStore.MergeWith(other.positiveValueStore)
-	s.negativeValueStore.MergeWith(other.negativeValueStore)
+	s.store.MergeWith(other.store)
 	s.zeroCount += other.zeroCount
 	return nil
 }

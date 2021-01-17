@@ -37,13 +37,6 @@ func EvaluateSketch(t *testing.T, n int, gen dataset.Generator, alpha float64) {
 		data.Add(value)
 	}
 	AssertSketchesAccurate(t, data, sketch, alpha)
-	// Add negative numbers
-	for i := 0; i < n; i++ {
-		value := gen.Generate()
-		sketch.Add(-value)
-		data.Add(-value)
-	}
-	AssertSketchesAccurate(t, data, sketch, alpha)
 }
 
 func AssertSketchesAccurate(t *testing.T, data *dataset.Dataset, sketch *DDSketch, alpha float64) {
@@ -121,7 +114,7 @@ func TestMergeNormal(t *testing.T) {
 				data.Add(value)
 			}
 			sketch2, _ := LogCollapsingLowestDenseDDSketch(alpha, testMaxBins)
-			generator2 := dataset.NewNormal(-10, 2)
+			generator2 := dataset.NewNormal(10, 2)
 			for i := 1; i < n; i += 3 {
 				value := generator2.Generate()
 				sketch2.Add(value)
