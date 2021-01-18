@@ -1,4 +1,4 @@
-module github.com/DataDog/sketches-go
+module github.com/graphmetrics/ddsketch-go
 
 go 1.15
 

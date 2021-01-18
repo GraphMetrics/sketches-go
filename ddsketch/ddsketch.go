@@ -9,8 +9,8 @@ import (
 	"errors"
 	"math"
 
-	"github.com/DataDog/sketches-go/ddsketch/mapping"
-	"github.com/DataDog/sketches-go/ddsketch/store"
+	"github.com/graphmetrics/ddsketch-go/ddsketch/mapping"
+	"github.com/graphmetrics/ddsketch-go/ddsketch/store"
 )
 
 type DDSketch struct {

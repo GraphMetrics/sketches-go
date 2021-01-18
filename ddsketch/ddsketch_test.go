@@ -11,7 +11,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/DataDog/sketches-go/dataset"
+	"github.com/graphmetrics/ddsketch-go/dataset"
 
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
