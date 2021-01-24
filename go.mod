@@ -1,4 +1,4 @@
-module github.com/graphmetrics/ddsketch-go
+module github.com/graphmetrics/sketches-go
 
 go 1.15
 
