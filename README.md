@@ -1,4 +1,8 @@
 # sketches-go 
+[![Go Reference](https://pkg.go.dev/badge/github.com/graphmetrics/sketches-go.svg)](https://pkg.go.dev/github.com/graphmetrics/sketches-go)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/graphmetrics/sketches-go)](https://github.com/graphmetrics/sketches-go)
+[![Go Report](https://goreportcard.com/badge/github.com/GraphMetrics/sketches-go)](https://goreportcard.com/report/github.com/graphmetrics/sketches-go)
+
 
 This repo contains a Go implementation of the distributed quantile sketch algorithm
 DDSketch[1] originally developed by [DataDog](https://github.com/datadog/sketches-go)™. DDSketch has relative-error guarantees for any quantile q in [0, 1].
