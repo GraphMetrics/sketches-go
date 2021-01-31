@@ -19,16 +19,21 @@ type LinearlyInterpolatedMapping struct {
 	relativeAccuracy      float64
 	multiplier            float64
 	normalizedIndexOffset float64
+	minIndexableValue     float64
+	maxIndexableValue     float64
 }
 
 func NewLinearlyInterpolatedMapping(relativeAccuracy float64) (*LinearlyInterpolatedMapping, error) {
 	if relativeAccuracy <= 0 || relativeAccuracy >= 1 {
 		return nil, errors.New("The relative accuracy must be between 0 and 1.")
 	}
-	return &LinearlyInterpolatedMapping{
+	m := &LinearlyInterpolatedMapping{
 		relativeAccuracy: relativeAccuracy,
 		multiplier:       1.0 / math.Log1p(2*relativeAccuracy/(1-relativeAccuracy)),
-	}, nil
+	}
+	m.minIndexableValue = m.computeMinIndexableValue()
+	m.maxIndexableValue = m.computeMaxIndexableValue()
+	return m, nil
 }
 
 func NewLinearlyInterpolatedMappingWithGamma(gamma, indexOffset float64) (*LinearlyInterpolatedMapping, error) {
@@ -40,6 +45,8 @@ func NewLinearlyInterpolatedMappingWithGamma(gamma, indexOffset float64) (*Linea
 		multiplier:       1 / math.Log2(gamma),
 	}
 	m.normalizedIndexOffset = indexOffset - m.approximateLog(1)*m.multiplier
+	m.minIndexableValue = m.computeMinIndexableValue()
+	m.maxIndexableValue = m.computeMaxIndexableValue()
 	return &m, nil
 }
 
@@ -79,6 +86,10 @@ func (m *LinearlyInterpolatedMapping) approximateInverseLog(x float64) float64 {
 }
 
 func (m *LinearlyInterpolatedMapping) MinIndexableValue() float64 {
+	return m.minIndexableValue
+}
+
+func (m *LinearlyInterpolatedMapping) computeMinIndexableValue() float64 {
 	return math.Max(
 		math.Exp2((math.MinInt16-m.normalizedIndexOffset)/m.multiplier-m.approximateLog(1)+1), // so that index >= MinInt16
 		minNormalFloat64*(1+m.relativeAccuracy)/(1-m.relativeAccuracy),
@@ -86,6 +97,10 @@ func (m *LinearlyInterpolatedMapping) MinIndexableValue() float64 {
 }
 
 func (m *LinearlyInterpolatedMapping) MaxIndexableValue() float64 {
+	return m.maxIndexableValue
+}
+
+func (m *LinearlyInterpolatedMapping) computeMaxIndexableValue() float64 {
 	return math.Min(
 		math.Exp2((math.MaxInt16-m.normalizedIndexOffset)/m.multiplier-m.approximateLog(float64(1))-1), // so that index <= MaxInt16
 		math.Exp(expOverflow)/(1+m.relativeAccuracy),                                                   // so that math.Exp does not overflow
