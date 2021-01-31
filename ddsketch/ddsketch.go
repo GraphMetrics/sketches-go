@@ -15,8 +15,7 @@ import (
 
 type DDSketch struct {
 	mapping.IndexMapping
-	store     store.Store
-	zeroCount int32
+	store store.Store
 }
 
 func NewDDSketch(indexMapping mapping.IndexMapping, store store.Store) *DDSketch {
@@ -71,18 +70,14 @@ func (s *DDSketch) Add(value float64) error {
 
 // Adds a value to the sketch with a int32 count.
 func (s *DDSketch) AddWithCount(value float64, count int32) error {
-	if value < 0 || value > s.MaxIndexableValue() {
+	if value < s.MinIndexableValue() || value > s.MaxIndexableValue() {
 		return errors.New("input value is outside the range that is tracked by the sketch")
 	}
 	if count < 0 {
-		return errors.New("The count cannot be negative.")
+		return errors.New("count cannot be negative")
 	}
 
-	if value > s.MinIndexableValue() {
-		s.store.AddWithCount(s.Index(value), count)
-	} else {
-		s.zeroCount += count
-	}
+	s.store.AddWithCount(s.Index(value), count)
 	return nil
 }
 
@@ -97,21 +92,27 @@ func (s *DDSketch) Copy() *DDSketch {
 // Return the value at the specified quantile. Return a non-nil error if the quantile is invalid
 // or if the sketch is empty.
 func (s *DDSketch) GetValueAtQuantile(quantile float64) (float64, error) {
+	key, err := s.GetIndexAtQuantile(quantile)
+	if err != nil {
+		return math.NaN(), err
+	}
+	return s.Value(key), nil
+}
+
+// Return the index at the specified quantile. Return a non-nil error if the quantile is invalid
+// or if the sketch is empty.
+func (s *DDSketch) GetIndexAtQuantile(quantile float64) (int, error) {
 	if quantile < 0 || quantile > 1 {
-		return math.NaN(), errors.New("The quantile must be between 0 and 1.")
+		return 0, errors.New("quantile must be between 0 and 1")
 	}
 
 	count := s.GetCount()
 	if count == 0 {
-		return math.NaN(), errors.New("no such element exists")
+		return 0, errors.New("no such element exists")
 	}
 
 	rank := quantile * float64(count-1)
-	if rank < float64(s.zeroCount) {
-		return 0, nil
-	} else {
-		return s.Value(s.store.KeyAtRank(rank - float64(s.zeroCount))), nil
-	}
+	return s.store.KeyAtRank(rank), nil
 }
 
 // Return the values at the respective specified quantiles. Return a non-nil error if any of the quantiles
@@ -130,47 +131,41 @@ func (s *DDSketch) GetValuesAtQuantiles(quantiles []float64) ([]float64, error) 
 
 // Return the total number of values that have been added to this sketch.
 func (s *DDSketch) GetCount() int32 {
-	return s.zeroCount + s.store.TotalCount()
+	return s.store.TotalCount()
 }
 
 // Return true iff no value has been added to this sketch.
 func (s *DDSketch) IsEmpty() bool {
-	return s.zeroCount == 0 && s.store.IsEmpty()
+	return s.store.IsEmpty()
 }
 
 // Return the maximum value that has been added to this sketch. Return a non-nil error if the sketch
 // is empty.
 func (s *DDSketch) GetMaxValue() (float64, error) {
-	if !s.store.IsEmpty() {
-		maxIndex, _ := s.store.MaxIndex()
-		return s.Value(maxIndex), nil
-	} else {
-		return 0, nil
+	maxIndex, err := s.store.MaxIndex()
+	if err != nil {
+		return math.NaN(), err
 	}
+	return s.Value(maxIndex), nil
 }
 
 // Return the minimum value that has been added to this sketch. Returns a non-nil error if the sketch
 // is empty.
 func (s *DDSketch) GetMinValue() (float64, error) {
-	if s.zeroCount > 0 {
-		return 0, nil
-	} else {
-		minIndex, err := s.store.MinIndex()
-		if err != nil {
-			return math.NaN(), err
-		}
-		return s.Value(minIndex), nil
+	minIndex, err := s.store.MinIndex()
+	if err != nil {
+		return math.NaN(), err
 	}
+	return s.Value(minIndex), nil
 }
 
 // Merges the other sketch into this one. After this operation, this sketch encodes the values that
 // were added to both this and the other sketches.
 func (s *DDSketch) MergeWith(other *DDSketch) error {
 	if !s.IndexMapping.Equals(other.IndexMapping) {
-		return errors.New("Cannot merge sketches with different index mappings.")
+		return errors.New("cannot merge sketches with different index mappings")
 	}
 	s.store.MergeWith(other.store)
-	s.zeroCount += other.zeroCount
 	return nil
 }
 

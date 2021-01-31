@@ -24,7 +24,7 @@ func (s *Constant) Generate() float64 { return s.constant }
 // Linearly increasing stream
 type Linear struct{ currentVal float64 }
 
-func NewLinear() *Linear { return &Linear{0} }
+func NewLinear() *Linear { return &Linear{1} }
 
 func (g *Linear) Generate() float64 {
 	value := g.currentVal

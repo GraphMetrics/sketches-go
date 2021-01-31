@@ -138,14 +138,14 @@ func (s *DenseStore) TotalCount() int32 {
 
 func (s *DenseStore) MinIndex() (int, error) {
 	if s.IsEmpty() {
-		return 0, errors.New("MinIndex of empty store is undefined.")
+		return 0, errors.New("MinIndex of empty store is undefined")
 	}
 	return s.minIndex, nil
 }
 
 func (s *DenseStore) MaxIndex() (int, error) {
 	if s.IsEmpty() {
-		return 0, errors.New("MaxIndex of empty store is undefined.")
+		return 0, errors.New("MaxIndex of empty store is undefined")
 	}
 	return s.maxIndex, nil
 }
